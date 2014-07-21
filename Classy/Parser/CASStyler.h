@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "CASObjectClassDescriptor.h"
 #import "CASStyleableItem.h"
+#import "CASBloomFilter.h"
 
 @interface CASStyler : NSObject
 
@@ -29,6 +30,8 @@
  *  Only use for debugging on simulator
  */
 @property (nonatomic, copy) NSString *watchFilePath;
+
+@property (nonatomic, strong) NSMutableDictionary *activeControllers;
 
 /**
  *  Set file path location of styling data and report any errors

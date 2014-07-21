@@ -4,6 +4,16 @@
    <Group
       location = "group:Classy"
       name = "Classy">
+      <Group
+         location = "container:"
+         name = "Utilities">
+         <FileRef
+            location = "group:Classy/Utilities/CASBloomFilter.h">
+         </FileRef>
+         <FileRef
+            location = "group:Classy/Utilities/CASBloomFilter.m">
+         </FileRef>
+      </Group>
       <FileRef
          location = "group:Classy.h">
       </FileRef>

@@ -625,6 +625,7 @@ NSInteger const CASParseErrorFileContents = 2;
                     childSelector.shouldSelectIndirectSuperview = shouldSelectIndirectSuperview;
                     childSelector.shouldConcatToParent = shouldConcatToParent;
                     childSelector.parentSelector = styleSelector;
+                    childSelector.controllerSpecific = styleSelector.controllerSpecific;
                     styleSelector.parent = YES;
 
                     styleSelector = childSelector;
@@ -640,7 +641,11 @@ NSInteger const CASParseErrorFileContents = 2;
             if ([tokenValue hasPrefix:@"."]) {
                 styleSelector.styleClass = [tokenValue substringFromIndex:1];
             } else {
-                styleSelector.objectClass = NSClassFromString(tokenValue);
+                Class objectClass = NSClassFromString(tokenValue);
+                styleSelector.objectClass = objectClass;
+                if ([objectClass isSubclassOfClass:[UIViewController class]]) {
+                    styleSelector.controllerSpecific = YES;
+                }
             }
 
             if (!styleSelector.objectClass && !shouldConcatToParent) {

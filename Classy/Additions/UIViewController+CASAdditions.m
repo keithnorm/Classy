@@ -22,13 +22,22 @@ static void *CASStyleHasBeenUpdatedKey = &CASStyleHasBeenUpdatedKey;
 + (void)load {
     [self cas_swizzleInstanceSelector:@selector(setView:)
                       withNewSelector:@selector(cas_setView:)];
+    [self cas_swizzleInstanceSelector:NSSelectorFromString(@"dealloc")
+                      withNewSelector:@selector(cas_dealloc)];
 }
 
 - (void)cas_setView:(UIView *)view {
     view.cas_alternativeParent = self;
-
+    
     [self cas_setView:view];
     [self cas_setNeedsUpdateStyling];
+    CASStyler *defaultStyler = [CASStyler defaultStyler];
+    [defaultStyler.activeControllers setObject:@(YES) forKey:NSStringFromClass([self class])];
+}
+
+- (void)cas_dealloc {
+    CASStyler *defaultStyler = [CASStyler defaultStyler];
+    [defaultStyler.activeControllers removeObjectForKey:NSStringFromClass([self class])];
 }
 
 #pragma mark - CASStyleableItem

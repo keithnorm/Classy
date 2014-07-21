@@ -88,12 +88,17 @@ NSArray *ClassGetSubclasses(Class parentClass) {
     }
     
     NSMutableArray *possibleStyleNodes = [NSMutableArray new];
+    NSPredicate *filter = [NSPredicate predicateWithBlock:^BOOL(CASStyleNode *styleNode, NSDictionary *bindings) {
+        return !styleNode.styleSelector.isControllerSpecific || [self.activeControllers objectForKey:NSStringFromClass( styleNode.styleSelector.lastSelector.objectClass)];
+    }];
     
     Class class = [item class];
-    [possibleStyleNodes addObjectsFromArray:[self.objectClassIndex valueForKey:NSStringFromClass(class)]];
+    NSArray *selectorsMatchingObjectClass = [self.objectClassIndex valueForKey:NSStringFromClass(class)];
+    [possibleStyleNodes addObjectsFromArray:[selectorsMatchingObjectClass filteredArrayUsingPredicate:filter]];
     
     if (item.cas_styleClass) {
-        [possibleStyleNodes addObjectsFromArray:[self.styleClassIndex valueForKey:item.cas_styleClass]];
+        NSArray *selectorsMatchingStyleClass = [self.styleClassIndex valueForKey:item.cas_styleClass];
+        [possibleStyleNodes addObjectsFromArray:[selectorsMatchingStyleClass filteredArrayUsingPredicate:filter]];
     }
     
     for (CASStyleNode *styleNode in possibleStyleNodes) {

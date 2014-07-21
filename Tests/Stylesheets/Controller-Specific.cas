@@ -1,0 +1,25 @@
+CASExampleViewController UILabel {
+    text-color: red;
+}
+
+CASExampleViewController {
+    UILabel {
+        text-color: blue;
+    }
+}
+
+CASExampleViewController {
+    UIView {
+        UIScrollView {
+            UIView {
+                UILabel {
+                    text-color: blue;
+                }
+            }
+        }
+    }
+}
+
+UILabel {
+    text-color: blue;
+}

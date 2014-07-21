@@ -31,6 +31,7 @@
     newSelector.shouldSelectSubclasses = self.shouldSelectSubclasses;
     newSelector.shouldSelectIndirectSuperview = self.shouldSelectIndirectSuperview;
     newSelector.shouldConcatToParent = self.shouldConcatToParent;
+    newSelector.controllerSpecific = self.controllerSpecific;
     newSelector.arguments = [self.arguments copy];
     newSelector.parentSelector = [self.parentSelector copy];
 
@@ -41,6 +42,10 @@
 
 - (CASStyleSelector *)lastSelector {
     return self.parentSelector.lastSelector ?: self;
+}
+
+- (BOOL)isControllerSpecific {
+    return _controllerSpecific || (self.lastSelector != self && self.lastSelector.controllerSpecific);
 }
 
 #pragma mark - public

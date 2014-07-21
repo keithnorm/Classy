@@ -38,6 +38,12 @@
 
 
 /**
+ *  Whether or not this selector is nested under a UIViewController selector
+ */
+@property (nonatomic, assign, getter = isControllerSpecific) BOOL controllerSpecific;
+
+
+/**
  *  Whether or not this selector should be concatenated
  */
 @property (nonatomic, assign) BOOL shouldConcatToParent;

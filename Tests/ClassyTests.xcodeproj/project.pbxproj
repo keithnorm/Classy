@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4E9EB1E5197DB91000D5A96B /* Controller-Specific.cas in Resources */ = {isa = PBXBuildFile; fileRef = 4E9EB1E3197DB80F00D5A96B /* Controller-Specific.cas */; };
 		9980D2916D344434ACF1CB78 /* libPods-ClassyTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C594C855E67D4ABAAB9D8034 /* libPods-ClassyTests.a */; };
 		BDABE4F7F7AD42D589D779BD /* libPods-ClassyTestsLoader.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 13B648C088D7485783343464 /* libPods-ClassyTestsLoader.a */; };
 		DD10AD361819FA6800A5B71D /* CustomView-Basic.cas in Resources */ = {isa = PBXBuildFile; fileRef = DD10AD2E1819FA6800A5B71D /* CustomView-Basic.cas */; };
@@ -75,6 +76,7 @@
 /* Begin PBXFileReference section */
 		13B648C088D7485783343464 /* libPods-ClassyTestsLoader.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ClassyTestsLoader.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		34BACA8D71A54943A4505935 /* Pods-ClassyTestsLoader.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTestsLoader.xcconfig"; path = "../Pods/Pods-ClassyTestsLoader.xcconfig"; sourceTree = "<group>"; };
+		4E9EB1E3197DB80F00D5A96B /* Controller-Specific.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Controller-Specific.cas"; sourceTree = "<group>"; };
 		5548B765C39C4F0FA776C911 /* Pods-ClassyTests.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTests.xcconfig"; path = "../Pods/Pods-ClassyTests.xcconfig"; sourceTree = "<group>"; };
 		C594C855E67D4ABAAB9D8034 /* libPods-ClassyTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ClassyTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD10AD2E1819FA6800A5B71D /* CustomView-Basic.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "CustomView-Basic.cas"; sourceTree = "<group>"; };
@@ -226,6 +228,7 @@
 		DDBF586F181145760059B8D3 /* Stylesheets */ = {
 			isa = PBXGroup;
 			children = (
+				4E9EB1E3197DB80F00D5A96B /* Controller-Specific.cas */,
 				DD10AD2E1819FA6800A5B71D /* CustomView-Basic.cas */,
 				DD10AD54181A1C9100A5B71D /* Properties-Args.cas */,
 				DD10AD2F1819FA6800A5B71D /* Properties-Basic.cas */,
@@ -392,6 +395,7 @@
 				DD592B13181DE5E800C30F7F /* Selectors-Nested.cas in Resources */,
 				DD148307186482AC00E0F5EF /* Variables-Basic.cas in Resources */,
 				DDB16C9A1895563900256EC6 /* Injected-File.cas in Resources */,
+				4E9EB1E5197DB91000D5A96B /* Controller-Specific.cas in Resources */,
 				DD10AD55181A1C9100A5B71D /* Properties-Args.cas in Resources */,
 				DD10AD3D1819FA6800A5B71D /* UIKit-Basic.cas in Resources */,
 				DD10AD361819FA6800A5B71D /* CustomView-Basic.cas in Resources */,
@@ -454,7 +458,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			shellScript = "";
 			showEnvVarsInLog = 0;
 		};
 		978F0B8381844F0694B65CD6 /* Check Pods Manifest.lock */ = {

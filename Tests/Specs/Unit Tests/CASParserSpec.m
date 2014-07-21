@@ -611,4 +611,27 @@ SpecBegin(CASParser) {
     expect(node.deviceSelector.stringValue).to.beNil();
 }
 
+- (void)testParseControllerSpecificStyles {
+    NSError *error = nil;
+    NSString *filePath = [[NSBundle bundleForClass:self.class] pathForResource:@"Controller-Specific.cas" ofType:nil];
+    NSArray *styles = [CASParser parserFromFilePath:filePath variables:nil error:&error].styleNodes;
+    expect(error).to.beNil();
+    
+    // descendant selector
+    CASStyleNode *node = styles[0];
+    expect(node.styleSelector.controllerSpecific).to.beTruthy();
+    
+    // nested descendant selector
+    node = styles[2];
+    expect(node.styleSelector.controllerSpecific).to.beTruthy();
+    
+    // deeply nested descendant selector
+    node = styles[7];
+    expect(node.styleSelector.controllerSpecific).to.beTruthy();
+    
+    // not controller specific
+    node = styles[8];
+    expect(node.styleSelector.controllerSpecific).to.beFalsy();
+}
+
 SpecEnd
