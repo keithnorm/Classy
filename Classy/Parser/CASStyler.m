@@ -76,6 +76,7 @@ NSArray *ClassGetSubclasses(Class parentClass) {
     self.fileWatchers = NSMutableArray.new;
     self.styleClassIndex = [NSMutableDictionary new];
     self.objectClassIndex = [NSMutableDictionary new];
+    self.activeControllers = [NSMutableDictionary new];
     [self setupObjectClassDescriptors];
 
     return self;
@@ -89,7 +90,7 @@ NSArray *ClassGetSubclasses(Class parentClass) {
     
     NSMutableArray *possibleStyleNodes = [NSMutableArray new];
     NSPredicate *filter = [NSPredicate predicateWithBlock:^BOOL(CASStyleNode *styleNode, NSDictionary *bindings) {
-        return !styleNode.styleSelector.isControllerSpecific || [self.activeControllers objectForKey:NSStringFromClass( styleNode.styleSelector.lastSelector.objectClass)];
+        return !styleNode.styleSelector.isControllerSpecific || styleNode.styleSelector.lastSelector.shouldSelectSubclasses || [self.activeControllers objectForKey:NSStringFromClass( styleNode.styleSelector.lastSelector.objectClass)];
     }];
     
     Class class = [item class];

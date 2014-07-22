@@ -16,10 +16,13 @@
 #import "UITextField+CASAdditions.h"
 #import "CASStyleNode.h"
 #import "UIDevice+CASMockDevice.h"
-
+#import "CASExampleViewController.h"
 
 @interface CASStyler ()
 @property (nonatomic, strong) NSMutableArray *styleNodes;
+
+// private, exposing for testing only
+- (void)populateStyleLookupTables:(NSArray *)styleNodes;
 @end
 
 SpecBegin(CASStyler){
@@ -289,4 +292,57 @@ SpecBegin(CASStyler){
     expect(view.minimumFontSize).to.equal(200);
 }
 
+- (void)testControllerSpecificStyles {
+    CASStyler *styler = CASStyler.new;
+    NSString *filePath = [[NSBundle bundleForClass:self.class] pathForResource:@"Empty.cas" ofType:nil];
+    NSError *error;
+    [styler setFilePath:filePath error:&error];
+    
+    // mock a valid selector
+    CASStyleNode *mockStyleNode = mock([CASStyleNode class]);
+    CASStyleSelector *parentSelector = [CASStyleSelector new];
+    parentSelector.objectClass = [UIViewController class];
+    CASStyleSelector *mockStyleSelector = mock([CASStyleSelector class]);
+    stubProperty(mockStyleSelector, objectClass, [UILabel class]);
+    stubProperty(mockStyleSelector, parentSelector, parentSelector);
+    stubProperty(mockStyleNode, styleSelector, mockStyleSelector);
+    
+    // mock an invalid selector
+    CASStyleNode *mockStyleNode2 = mock([CASStyleNode class]);
+    CASStyleSelector *parentSelector2 = [CASStyleSelector new];
+    parentSelector.objectClass = [CASExampleViewController class];
+    CASStyleSelector *mockStyleSelector2 = mock([CASStyleSelector class]);
+    stubProperty(mockStyleSelector2, objectClass, [UILabel class]);
+    stubProperty(mockStyleSelector2, parentSelector, parentSelector2);
+    stubProperty(mockStyleNode2, styleSelector, mockStyleSelector2);
+    
+    styler.styleNodes = [@[mockStyleNode] mutableCopy];
+    [styler populateStyleLookupTables:styler.styleNodes];
+    
+    UIViewController *controller = [UIViewController new];
+    [styler.activeControllers setObject:@(YES) forKey:NSStringFromClass([controller class])];
+    UIView *view = [UIView new];
+    UILabel *label = [UILabel new];
+    [view addSubview:label];
+    controller.view = view;
+    [styler styleItem:label];
+    [verifyCount(mockStyleSelector, times(1)) shouldSelectItem:label];
+    [verifyCount(mockStyleSelector2, never()) shouldSelectItem:label];
+}
+
+- (void)testControllerSpecificStylesWithSubclass {
+    CASStyler *styler = CASStyler.new;
+    NSString *filePath = [[NSBundle bundleForClass:self.class] pathForResource:@"Controller-Specific.cas" ofType:nil];
+    NSError *error;
+    [styler setFilePath:filePath error:&error];
+    
+    CASExampleViewController *controller = [CASExampleViewController new];
+    [styler.activeControllers setObject:@(YES) forKey:NSStringFromClass([controller class])];
+    UIView *view = [UIView new];
+    UILabel *label = [UILabel new];
+    [view addSubview:label];
+    controller.view = view;
+    [styler styleItem:label];
+    expect(label.textColor).to.equal([UIColor redColor]);
+}
 SpecEnd

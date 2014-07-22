@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "CASObjectClassDescriptor.h"
 #import "CASStyleableItem.h"
-#import "CASBloomFilter.h"
 
 @interface CASStyler : NSObject
 

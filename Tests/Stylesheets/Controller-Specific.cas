@@ -1,14 +1,14 @@
-CASExampleViewController UILabel {
+^UIViewController UILabel {
     text-color: red;
 }
 
-CASExampleViewController {
+UIViewController {
     UILabel {
         text-color: blue;
     }
 }
 
-CASExampleViewController {
+UIViewController {
     UIView {
         UIScrollView {
             UIView {

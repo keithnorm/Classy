@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4E9EB1E5197DB91000D5A96B /* Controller-Specific.cas in Resources */ = {isa = PBXBuildFile; fileRef = 4E9EB1E3197DB80F00D5A96B /* Controller-Specific.cas */; };
+		4EF7C400197DE4DC00392D6D /* Empty.cas in Resources */ = {isa = PBXBuildFile; fileRef = 4EF7C3FE197DE48500392D6D /* Empty.cas */; };
 		9980D2916D344434ACF1CB78 /* libPods-ClassyTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C594C855E67D4ABAAB9D8034 /* libPods-ClassyTests.a */; };
 		BDABE4F7F7AD42D589D779BD /* libPods-ClassyTestsLoader.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 13B648C088D7485783343464 /* libPods-ClassyTestsLoader.a */; };
 		DD10AD361819FA6800A5B71D /* CustomView-Basic.cas in Resources */ = {isa = PBXBuildFile; fileRef = DD10AD2E1819FA6800A5B71D /* CustomView-Basic.cas */; };
@@ -77,6 +78,7 @@
 		13B648C088D7485783343464 /* libPods-ClassyTestsLoader.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ClassyTestsLoader.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		34BACA8D71A54943A4505935 /* Pods-ClassyTestsLoader.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTestsLoader.xcconfig"; path = "../Pods/Pods-ClassyTestsLoader.xcconfig"; sourceTree = "<group>"; };
 		4E9EB1E3197DB80F00D5A96B /* Controller-Specific.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Controller-Specific.cas"; sourceTree = "<group>"; };
+		4EF7C3FE197DE48500392D6D /* Empty.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Empty.cas; sourceTree = "<group>"; };
 		5548B765C39C4F0FA776C911 /* Pods-ClassyTests.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTests.xcconfig"; path = "../Pods/Pods-ClassyTests.xcconfig"; sourceTree = "<group>"; };
 		C594C855E67D4ABAAB9D8034 /* libPods-ClassyTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ClassyTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD10AD2E1819FA6800A5B71D /* CustomView-Basic.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "CustomView-Basic.cas"; sourceTree = "<group>"; };
@@ -250,6 +252,7 @@
 				DDB16C991895563900256EC6 /* Injected-File.cas */,
 				DDE7E51D18915B0600BA5718 /* Precedence-1.cas */,
 				DDE7E51E18915B0600BA5718 /* Precedence-2.cas */,
+				4EF7C3FE197DE48500392D6D /* Empty.cas */,
 			);
 			path = Stylesheets;
 			sourceTree = "<group>";
@@ -410,6 +413,7 @@
 				DD2C8C931863D7E300F06746 /* Selectors-Media-Queries-styler.cas in Resources */,
 				DD52F105183DCB2600F31A3F /* Import-1.cas in Resources */,
 				DD5B2DB0189532DC00CB6531 /* Variables-Injection.cas in Resources */,
+				4EF7C400197DE4DC00392D6D /* Empty.cas in Resources */,
 				DDE7E52018915B0600BA5718 /* Precedence-2.cas in Resources */,
 				DD10AD391819FA6800A5B71D /* Selectors-Complex.cas in Resources */,
 			);
