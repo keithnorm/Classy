@@ -10,15 +10,6 @@
 #import "NSString+CASAdditions.h"
 #import "CASExpressionSolver.h"
 
-/* Obviously this UIColor extension would be defined somewhere else in the project */
-@implementation UIColor(alpha)
-
-- (UIColor *)alpha:(NSNumber *)value {
-    return [self colorWithAlphaComponent:value.floatValue];
-}
-
-@end
-
 @interface CASStyleProperty ()
 
 @property (nonatomic, strong, readwrite) NSString *name;
