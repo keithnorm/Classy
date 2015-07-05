@@ -254,133 +254,130 @@ NSArray *ClassGetSubclasses(Class parentClass) {
 
     [propertyDescriptor.argumentDescriptors enumerateObjectsUsingBlock:^(CASArgumentDescriptor *argDescriptor, NSUInteger idx, BOOL *stop) {
         NSInteger argIndex = 2 + idx;
-
-        if (idx > 0) {
-            //arguments after first only supports enums at moment
-            NSString *valueName = [styleProperty.arguments[argDescriptor.name] cas_stringByCamelCasing];
-            if (valueName.length) {
-                NSInteger value = [argDescriptor.valuesByName[valueName] integerValue];
-                [invocation setArgument:&value atIndex:argIndex];
-            }
-            return;
+        NSString *valueName = [styleProperty.arguments[argDescriptor.name] cas_stringByCamelCasing];
+        if (valueName.length) {
+            NSInteger value = [argDescriptor.valuesByName[valueName] integerValue];
+            [invocation setArgument:&value atIndex:argIndex];
         }
 
-        switch (argDescriptor.primitiveType) {
-            case CASPrimitiveTypeBOOL: {
-                id value = [styleProperty valueOfTokenType:CASTokenTypeBoolean] ?: [styleProperty valueOfTokenType:CASTokenTypeUnit];
-                BOOL boolValue = [value boolValue];
-                [invocation setArgument:&boolValue atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeInteger: {
-                NSInteger value;
-                if (argDescriptor.valuesByName) {
-                    NSString *valueName = [[styleProperty valueOfTokenType:CASTokenTypeRef] cas_stringByCamelCasing];
-                    value = [argDescriptor.valuesByName[valueName] integerValue];
-                } else {
-                    value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] integerValue];
+        else {
+            switch (argDescriptor.primitiveType) {
+                case CASPrimitiveTypeBOOL: {
+                    id value = [styleProperty valueOfTokenType:CASTokenTypeBoolean] ?: [styleProperty valueOfTokenType:CASTokenTypeUnit];
+                    BOOL boolValue = [value boolValue];
+                    [invocation setArgument:&boolValue atIndex:argIndex];
+                    break;
                 }
-                [invocation setArgument:&value atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeDouble: {
-                CGFloat value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] doubleValue];
-                [invocation setArgument:&value atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeFloat: {
-                float value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] floatValue];
-                [invocation setArgument:&value atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeCGSize: {
-                CGSize size;
-                [styleProperty transformValuesToCGSize:&size];
-                [invocation setArgument:&size atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeCGRect: {
-                CGRect rect;
-                [styleProperty transformValuesToCGRect:&rect];
-                [invocation setArgument:&rect atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeCGPoint: {
-                CGPoint point;
-                [styleProperty transformValuesToCGPoint:&point];
-                [invocation setArgument:&point atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeUIEdgeInsets: {
-                UIEdgeInsets insets;
-                [styleProperty transformValuesToUIEdgeInsets:&insets];
-                [invocation setArgument:&insets atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeUIOffset : {
-                UIOffset offset;
-                [styleProperty transformValuesToUIOffset:&offset];
-                [invocation setArgument:&offset atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeCGColorRef : {
-                UIColor *color = nil;
-                [styleProperty transformValuesToUIColor:&color];
-                if (color) {
-                    [self.invocationObjectArguments addObject:color];
+                case CASPrimitiveTypeInteger: {
+                    NSInteger value;
+                    if (argDescriptor.valuesByName) {
+                        NSString *valueName = [[styleProperty valueOfTokenType:CASTokenTypeRef] cas_stringByCamelCasing];
+                        value = [argDescriptor.valuesByName[valueName] integerValue];
+                    } else {
+                        value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] integerValue];
+                    }
+                    [invocation setArgument:&value atIndex:argIndex];
+                    break;
                 }
-                CGColorRef colorRef = color.CGColor;
-                [invocation setArgument:&colorRef atIndex:argIndex];
+                case CASPrimitiveTypeDouble: {
+                    CGFloat value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] doubleValue];
+                    [invocation setArgument:&value atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeFloat: {
+                    float value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] floatValue];
+                    [invocation setArgument:&value atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeCGSize: {
+                    CGSize size;
+                    [styleProperty transformValuesToCGSize:&size];
+                    [invocation setArgument:&size atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeCGRect: {
+                    CGRect rect;
+                    [styleProperty transformValuesToCGRect:&rect];
+                    [invocation setArgument:&rect atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeCGPoint: {
+                    CGPoint point;
+                    [styleProperty transformValuesToCGPoint:&point];
+                    [invocation setArgument:&point atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeUIEdgeInsets: {
+                    UIEdgeInsets insets;
+                    [styleProperty transformValuesToUIEdgeInsets:&insets];
+                    [invocation setArgument:&insets atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeUIOffset : {
+                    UIOffset offset;
+                    [styleProperty transformValuesToUIOffset:&offset];
+                    [invocation setArgument:&offset atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeCGColorRef : {
+                    UIColor *color = nil;
+                    [styleProperty transformValuesToUIColor:&color];
+                    if (color) {
+                        [self.invocationObjectArguments addObject:color];
+                    }
+                    CGColorRef colorRef = color.CGColor;
+                    [invocation setArgument:&colorRef atIndex:argIndex];
+                }
+                default:
+                    break;
             }
-            default:
-                break;
-        }
 
-        id objectArg = nil;
-        if (argDescriptor.argumentClass == UIImage.class) {
-            [styleProperty transformValuesToUIImage:&objectArg];
-        } else if (argDescriptor.argumentClass == UIColor.class) {
-            [styleProperty transformValuesToUIColor:&objectArg];
-        } else if (argDescriptor.argumentClass == NSString.class) {
-            [styleProperty transformValuesToNSString:&objectArg];
-        } else if (argDescriptor.argumentClass == UIFont.class) {
-            [styleProperty transformValuesToUIFont:&objectArg];
-        }
-
-        if (styleProperty.childStyleProperties.count) {
-            id target = nil;
-            Class targetClass = argDescriptor.argumentClass;
-
-            NSString *childKeyPath = keypath.length ? [NSString stringWithFormat:@"%@.%@", keypath, styleProperty.name] : styleProperty.name;
-
-            // handle textAttributes as special case
-            BOOL isTextAttributesArg = targetClass == NSDictionary.class && isTextAttributesProperty;
-            if (isTextAttributesArg) {
-                target = CASTextAttributes.new;
-                targetClass = CASTextAttributes.class;
-                childKeyPath = nil;
+            id objectArg = nil;
+            if (argDescriptor.argumentClass == UIImage.class) {
+                [styleProperty transformValuesToUIImage:&objectArg];
+            } else if (argDescriptor.argumentClass == UIColor.class) {
+                [styleProperty transformValuesToUIColor:&objectArg];
+            } else if (argDescriptor.argumentClass == NSString.class) {
+                [styleProperty transformValuesToNSString:&objectArg];
+            } else if (argDescriptor.argumentClass == UIFont.class) {
+                [styleProperty transformValuesToUIFont:&objectArg];
             }
 
-            for (CASStyleProperty *childStyleProperty in styleProperty.childStyleProperties) {
-                NSArray *childInvocations = [self invocationsForClass:targetClass styleProperty:childStyleProperty keyPath:childKeyPath];
-                
-                if (target) {
-                    [childInvocations makeObjectsPerformSelector:@selector(invokeWithTarget:) withObject:target];
-                } else {
-                    [invocations addObjectsFromArray:childInvocations];
+            if (styleProperty.childStyleProperties.count) {
+                id target = nil;
+                Class targetClass = argDescriptor.argumentClass;
+
+                NSString *childKeyPath = keypath.length ? [NSString stringWithFormat:@"%@.%@", keypath, styleProperty.name] : styleProperty.name;
+
+                // handle textAttributes as special case
+                BOOL isTextAttributesArg = targetClass == NSDictionary.class && isTextAttributesProperty;
+                if (isTextAttributesArg) {
+                    target = CASTextAttributes.new;
+                    targetClass = CASTextAttributes.class;
+                    childKeyPath = nil;
+                }
+
+                for (CASStyleProperty *childStyleProperty in styleProperty.childStyleProperties) {
+                    NSArray *childInvocations = [self invocationsForClass:targetClass styleProperty:childStyleProperty keyPath:childKeyPath];
+                    
+                    if (target) {
+                        [childInvocations makeObjectsPerformSelector:@selector(invokeWithTarget:) withObject:target];
+                    } else {
+                        [invocations addObjectsFromArray:childInvocations];
+                    }
+                }
+
+                // if textAttributes set argument to dictionary value
+                if (isTextAttributesArg) {
+                    objectArg = [target dictionary];
+                    [invocation setArgument:&objectArg atIndex:argIndex];
                 }
             }
 
-            // if textAttributes set argument to dictionary value
-            if (isTextAttributesArg) {
-                objectArg = [target dictionary];
+            if (objectArg != nil) {
                 [invocation setArgument:&objectArg atIndex:argIndex];
+                [self.invocationObjectArguments addObject:objectArg];
             }
-        }
-
-        if (objectArg != nil) {
-            [invocation setArgument:&objectArg atIndex:argIndex];
-            [self.invocationObjectArguments addObject:objectArg];
         }
     }];
     return invocations;
