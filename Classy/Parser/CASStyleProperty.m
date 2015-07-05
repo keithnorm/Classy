@@ -10,6 +10,15 @@
 #import "NSString+CASAdditions.h"
 #import "CASExpressionSolver.h"
 
+/* Obviously this UIColor extension would be defined somewhere else in the project */
+@implementation UIColor(alpha)
+
+- (UIColor *)alpha:(NSNumber *)value {
+    return [self colorWithAlphaComponent:value.floatValue];
+}
+
+@end
+
 @interface CASStyleProperty ()
 
 @property (nonatomic, strong, readwrite) NSString *name;
@@ -160,16 +169,31 @@
 
 - (BOOL)transformValuesToUIColor:(UIColor **)color {
     UIColor *colorValue = [self valueOfTokenType:CASTokenTypeColor];
-    if (colorValue) {
-        *color = colorValue;
-        return YES;
-    }
 
     NSString *value = [self valueOfTokenType:CASTokenTypeRef]
         ?: [self valueOfTokenType:CASTokenTypeSelector]
         ?: [self valueOfTokenType:CASTokenTypeString];
 
-    if ([value isEqualToString:@"rgb"] || [value isEqualToString:@"rgba"] || [value isEqualToString:@"hsl"] || [value isEqualToString:@"hsla"]) {
+    
+    NSString *colorFunctionSelector = [NSString stringWithFormat:@"%@:", value];
+    if ([UIColor instancesRespondToSelector:NSSelectorFromString(colorFunctionSelector)]) {
+        NSMutableArray *mutableValueTokens = self.valueTokens.mutableCopy;
+        [mutableValueTokens removeObjectAtIndex:0];
+        self.valueTokens = [NSArray arrayWithArray:mutableValueTokens];
+        UIColor *colorValue = [self valueOfTokenType:CASTokenTypeColor];
+        [self transformValuesToUIColor:&colorValue];
+        NSArray *unitTokens = [self consecutiveValuesOfTokenType:CASTokenTypeUnit];
+        NSExpression *colorExpression = [NSExpression expressionForConstantValue:colorValue];
+        NSExpression *expression = [NSExpression expressionForFunction:colorExpression selectorName:colorFunctionSelector arguments:@[[NSExpression expressionForConstantValue:unitTokens[0]]]];
+        *color = [expression expressionValueWithObject:nil context:nil];
+        return YES;
+    }
+    
+    if (colorValue) {
+        *color = colorValue;
+        return YES;
+    }
+    else if ([value isEqualToString:@"rgb"] || [value isEqualToString:@"rgba"] || [value isEqualToString:@"hsl"] || [value isEqualToString:@"hsla"]) {
         NSArray *unitTokens = [self consecutiveValuesOfTokenType:CASTokenTypeUnit];
         CGFloat alpha = 1.0;
 
