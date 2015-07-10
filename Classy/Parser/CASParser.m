@@ -779,9 +779,13 @@ NSInteger const CASParseErrorFileContents = 2;
 }
 
 - (Class)swiftClassFromString:(NSString *)className {
-	NSString *appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
-	NSString *classStringName = [NSString stringWithFormat:@"_TtC%d%@%d%@", appName.length, appName, className.length, className];
-	return NSClassFromString(classStringName);
+    NSString *appName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
+    NSCharacterSet *charactersToRemove = [[NSCharacterSet alphanumericCharacterSet] invertedSet];
+    appName = [[appName componentsSeparatedByCharactersInSet:charactersToRemove] componentsJoinedByString:@"_"];
+    NSString *productModuleName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"Product Module Name"];
+    NSString *moduleName = productModuleName != nil ? productModuleName : appName;
+    NSString *classStringName = [NSString stringWithFormat:@"%@.%@", moduleName, className];
+    return NSClassFromString(classStringName);
 }
 
 
