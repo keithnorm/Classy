@@ -5,7 +5,7 @@
 //  Created by Jonas Budelmann on 18/11/13.
 //  Copyright (c) 2013 Jonas Budelmann. All rights reserved.
 //
-
+#import "Classy.h"
 #import "UIView+CASAdditions.h"
 #import "XCTest+Spec.h"
 
@@ -36,6 +36,9 @@ SpecBegin(UIView_CASAdditions)
 
 //test coalescing of styling calls
 - (void)testStyleUpdateCalledOnce {
+    CASStyler *styler = CASStyler.new;
+    styler.filePath = [[NSBundle bundleForClass:self.class] pathForResource:@"CustomView-Basic.cas" ofType:nil];
+    [CASStyler registerStyler:styler];
     TestView *view = TestView.new;
 
     view.cas_styleClass = @"test";

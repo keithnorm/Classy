@@ -10,6 +10,20 @@
 #import "XCTest+Spec.h"
 #import "CASExampleView.h"
 
+@interface UIColor(transformation)
+
+- (UIColor *)alpha:(NSNumber *)value;
+
+@end
+
+@implementation UIColor(transformation)
+
+- (UIColor *)alpha:(NSNumber *)value {
+    return [self colorWithAlphaComponent:value.floatValue];
+}
+
+@end
+
 SpecBegin(CASCustomColorFunctions)
 
 - (void)testViewCustomColorFunctions {

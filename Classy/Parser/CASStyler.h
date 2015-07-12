@@ -17,6 +17,36 @@
  */
 + (instancetype)defaultStyler;
 
++ (void)registerStyler:(CASStyler *)styler;
++ (void)removeStyler:(CASStyler *)styler;
+
+/**
+ * Array of currently registered stylers
+ */
++ (NSMutableDictionary *)activeStylers;
+
+/**
+ *  Apply any applicable styles to a CASStyleableItem instance, from low to high precendence
+ *
+ *  @param item `CASStyleableItem` to apply styles to
+ */
++ (void)styleItem:(id<CASStyleableItem>)item;
+
+/**
+ *  Schedule update for styleable item on all active stylers.
+ *  This ensures we only update an item once per run loop
+ *
+ *  @param item CASStyleableItem to coalesce update calls
+ */
++ (void)scheduleUpdateForItem:(id<CASStyleableItem>)item;
+
+/**
+ *  Unschedule update for styleable item on all active stylers
+ *
+ *  @param item CASStyleableItem that no longer needs updating
+ */
++ (void)unscheduleUpdateForItem:(id<CASStyleableItem>)item;
+
 @property (nonatomic, copy) NSDictionary *variables;
 
 /**
