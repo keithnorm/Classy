@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4E0535F41B49B91900446E65 /* CASCustomColorFunctionsSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E0535F01B49B62A00446E65 /* CASCustomColorFunctionsSpec.m */; };
+		4E0535F51B49B9B400446E65 /* CustomColorFunctions.cas in Resources */ = {isa = PBXBuildFile; fileRef = 4E0535F21B49B6A800446E65 /* CustomColorFunctions.cas */; };
 		4ED0F9A3198B476E00C9FE2C /* UIKit-MultipleClasses.cas in Resources */ = {isa = PBXBuildFile; fileRef = 4ED0F9A1198B465600C9FE2C /* UIKit-MultipleClasses.cas */; };
 		9980D2916D344434ACF1CB78 /* libPods-ClassyTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C594C855E67D4ABAAB9D8034 /* libPods-ClassyTests.a */; };
 		BDABE4F7F7AD42D589D779BD /* libPods-ClassyTestsLoader.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 13B648C088D7485783343464 /* libPods-ClassyTestsLoader.a */; };
@@ -75,10 +77,14 @@
 
 /* Begin PBXFileReference section */
 		13B648C088D7485783343464 /* libPods-ClassyTestsLoader.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ClassyTestsLoader.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		34BACA8D71A54943A4505935 /* Pods-ClassyTestsLoader.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTestsLoader.xcconfig"; path = "../Pods/Pods-ClassyTestsLoader.xcconfig"; sourceTree = "<group>"; };
+		149D7CE894A243342298F58E /* Pods-ClassyTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTests.debug.xcconfig"; path = "../Pods/Target Support Files/Pods-ClassyTests/Pods-ClassyTests.debug.xcconfig"; sourceTree = "<group>"; };
+		4E0535F01B49B62A00446E65 /* CASCustomColorFunctionsSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CASCustomColorFunctionsSpec.m; sourceTree = "<group>"; };
+		4E0535F21B49B6A800446E65 /* CustomColorFunctions.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CustomColorFunctions.cas; sourceTree = "<group>"; };
 		4ED0F9A1198B465600C9FE2C /* UIKit-MultipleClasses.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "UIKit-MultipleClasses.cas"; sourceTree = "<group>"; };
-		5548B765C39C4F0FA776C911 /* Pods-ClassyTests.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTests.xcconfig"; path = "../Pods/Pods-ClassyTests.xcconfig"; sourceTree = "<group>"; };
+		96E7087BB95123FD96AC2B9C /* Pods-ClassyTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTests.release.xcconfig"; path = "../Pods/Target Support Files/Pods-ClassyTests/Pods-ClassyTests.release.xcconfig"; sourceTree = "<group>"; };
+		AD5E4BF7E79F5C3E0014F3AF /* Pods-ClassyTestsLoader.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTestsLoader.release.xcconfig"; path = "../Pods/Target Support Files/Pods-ClassyTestsLoader/Pods-ClassyTestsLoader.release.xcconfig"; sourceTree = "<group>"; };
 		C594C855E67D4ABAAB9D8034 /* libPods-ClassyTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ClassyTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8ADF686F52D4AFC243B101F /* Pods-ClassyTestsLoader.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ClassyTestsLoader.debug.xcconfig"; path = "../Pods/Target Support Files/Pods-ClassyTestsLoader/Pods-ClassyTestsLoader.debug.xcconfig"; sourceTree = "<group>"; };
 		DD10AD2E1819FA6800A5B71D /* CustomView-Basic.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "CustomView-Basic.cas"; sourceTree = "<group>"; };
 		DD10AD2F1819FA6800A5B71D /* Properties-Basic.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Properties-Basic.cas"; sourceTree = "<group>"; };
 		DD10AD301819FA6800A5B71D /* Selectors-Messy.cas */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Selectors-Messy.cas"; sourceTree = "<group>"; };
@@ -170,12 +176,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D93952DCEA5393128436D9B7 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				149D7CE894A243342298F58E /* Pods-ClassyTests.debug.xcconfig */,
+				96E7087BB95123FD96AC2B9C /* Pods-ClassyTests.release.xcconfig */,
+				C8ADF686F52D4AFC243B101F /* Pods-ClassyTestsLoader.debug.xcconfig */,
+				AD5E4BF7E79F5C3E0014F3AF /* Pods-ClassyTestsLoader.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
 		DD10AD3E181A16EA00A5B71D /* Integration Tests */ = {
 			isa = PBXGroup;
 			children = (
 				DD10AD4E181A172F00A5B71D /* CASUIKitSpec.m */,
 				DD10AD50181A174A00A5B71D /* CASUIAppearanceSpec.m */,
 				DD10AD52181A176000A5B71D /* CASCustomViewSpec.m */,
+				4E0535F01B49B62A00446E65 /* CASCustomColorFunctionsSpec.m */,
 			);
 			path = "Integration Tests";
 			sourceTree = "<group>";
@@ -250,6 +268,7 @@
 				DDE7E51D18915B0600BA5718 /* Precedence-1.cas */,
 				DDE7E51E18915B0600BA5718 /* Precedence-2.cas */,
 				4ED0F9A1198B465600C9FE2C /* UIKit-MultipleClasses.cas */,
+				4E0535F21B49B6A800446E65 /* CustomColorFunctions.cas */,
 			);
 			path = Stylesheets;
 			sourceTree = "<group>";
@@ -262,8 +281,7 @@
 				DDBF585A18113C850059B8D3 /* Supporting Files */,
 				DDD3D48B1810D6DA00E378A2 /* Frameworks */,
 				DDD3D48A1810D6DA00E378A2 /* Products */,
-				5548B765C39C4F0FA776C911 /* Pods-ClassyTests.xcconfig */,
-				34BACA8D71A54943A4505935 /* Pods-ClassyTestsLoader.xcconfig */,
+				D93952DCEA5393128436D9B7 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -406,6 +424,7 @@
 				DD10AD3C1819FA6800A5B71D /* UIAppearance-Basic.cas in Resources */,
 				DD10AD3B1819FA6800A5B71D /* Selectors-Indentation.cas in Resources */,
 				DD52F107183DCB2600F31A3F /* Import-Base.cas in Resources */,
+				4E0535F51B49B9B400446E65 /* CustomColorFunctions.cas in Resources */,
 				DD2C8C931863D7E300F06746 /* Selectors-Media-Queries-styler.cas in Resources */,
 				DD52F105183DCB2600F31A3F /* Import-1.cas in Resources */,
 				DD5B2DB0189532DC00CB6531 /* Variables-Injection.cas in Resources */,
@@ -443,7 +462,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/../Pods/Pods-ClassyTestsLoader-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/../Pods/Target Support Files/Pods-ClassyTestsLoader/Pods-ClassyTestsLoader-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		85CB2FDD53654D26A4128DD4 /* Check Pods Manifest.lock */ = {
@@ -488,7 +507,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/../Pods/Pods-ClassyTests-resources.sh\"\n";
+			shellScript = "\"${SRCROOT}/../Pods/Target Support Files/Pods-ClassyTests/Pods-ClassyTests-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -500,6 +519,7 @@
 			files = (
 				DD748A5C184446A700DE426A /* UIDevice+CASMockDevice.m in Sources */,
 				DD10AD51181A174A00A5B71D /* CASUIAppearanceSpec.m in Sources */,
+				4E0535F41B49B91900446E65 /* CASCustomColorFunctionsSpec.m in Sources */,
 				DD10AD47181A16EA00A5B71D /* CASArgumentDescriptorSpec.m in Sources */,
 				DD10AD49181A16EA00A5B71D /* CASParserSpec.m in Sources */,
 				DD10AD53181A176000A5B71D /* CASCustomViewSpec.m in Sources */,
@@ -539,7 +559,7 @@
 /* Begin XCBuildConfiguration section */
 		DDBF584318113BC10059B8D3 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5548B765C39C4F0FA776C911 /* Pods-ClassyTests.xcconfig */;
+			baseConfigurationReference = 149D7CE894A243342298F58E /* Pods-ClassyTests.debug.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/ClassyTestsLoader.app/ClassyTestsLoader";
@@ -563,7 +583,7 @@
 		};
 		DDBF584418113BC10059B8D3 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5548B765C39C4F0FA776C911 /* Pods-ClassyTests.xcconfig */;
+			baseConfigurationReference = 96E7087BB95123FD96AC2B9C /* Pods-ClassyTests.release.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_INCLUDING_64_BIT)";
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/ClassyTestsLoader.app/ClassyTestsLoader";
@@ -657,10 +677,11 @@
 		};
 		DDD3D4B61810D6DA00E378A2 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 34BACA8D71A54943A4505935 /* Pods-ClassyTestsLoader.xcconfig */;
+			baseConfigurationReference = C8ADF686F52D4AFC243B101F /* Pods-ClassyTestsLoader.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
 				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
 				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -674,10 +695,11 @@
 		};
 		DDD3D4B71810D6DA00E378A2 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 34BACA8D71A54943A4505935 /* Pods-ClassyTestsLoader.xcconfig */;
+			baseConfigurationReference = AD5E4BF7E79F5C3E0014F3AF /* Pods-ClassyTestsLoader.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				FRAMEWORK_SEARCH_PATHS = "$(PLATFORM_DIR)/Developer/Library/Frameworks";
 				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
 				GCC_INSTRUMENT_PROGRAM_FLOW_ARCS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;

@@ -1,0 +1,5 @@
+$myColor = #00ff00
+
+UIView {
+    background-color:  alpha($myColor, 0.5)
+}

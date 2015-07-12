@@ -67,18 +67,61 @@ NSArray *ClassGetSubclasses(Class parentClass) {
     return _defaultStyler;
 }
 
++ (NSMutableDictionary *)activeStylers {
+    static NSMutableDictionary *activeStylers = nil;
+    if (activeStylers == nil) {
+        activeStylers = [NSMutableDictionary dictionary];
+        CASStyler *defaultStyler = [CASStyler defaultStyler];
+        NSString *defaultPath = [[NSBundle mainBundle] pathForResource:@"stylesheet.cas" ofType:nil];
+        if (defaultPath != nil) {
+            [activeStylers setObject:defaultStyler forKey:defaultPath];
+        }
+    }
+    return activeStylers;
+}
+
 - (id)init {
     self = [super init];
     if (!self) return nil;
-
+    
     self.objectClassDescriptorCache = NSMapTable.strongToStrongObjectsMapTable;
     self.scheduledItems = [NSHashTable hashTableWithOptions:NSHashTableWeakMemory];
     self.fileWatchers = NSMutableArray.new;
     self.styleClassIndex = [NSMutableDictionary new];
     self.objectClassIndex = [NSMutableDictionary new];
     [self setupObjectClassDescriptors];
-
+    
     return self;
+}
+
++ (void)styleItem:(id<CASStyleableItem>)item {
+    for (CASStyler *styler in [self.activeStylers allValues] ) {
+        [styler styleItem: item];
+    }
+}
+
++ (void)unscheduleUpdateForItem:(id<CASStyleableItem>)item {
+    for (CASStyler *styler in [self.activeStylers allValues]) {
+        [styler unscheduleUpdateForItem:item];
+    }
+}
+
++ (void)scheduleUpdateForItem:(id<CASStyleableItem>)item {
+    for (CASStyler *styler in [self.activeStylers allValues]) {
+        [styler scheduleUpdateForItem:item];
+    }
+}
+
++ (void)registerStyler:(CASStyler *)styler {
+    if (styler != nil) {
+        [[self activeStylers] setObject:styler forKey:styler.filePath];
+    }
+}
+
++ (void)removeStyler:(CASStyler *)styler {
+    if (styler != nil && styler.filePath != nil) {
+        [[self activeStylers] removeObjectForKey:styler.filePath];
+    }
 }
 
 - (void)styleItem:(id<CASStyleableItem>)item {
@@ -110,13 +153,13 @@ NSArray *ClassGetSubclasses(Class parentClass) {
 
 - (void)setVariables:(NSDictionary *)variables {
     _variables = variables;
-
+    
     if (!self.filePath) return;
-
+    
     // if stylesheet has already been loaded. reload stylesheet
     _filePath = nil;
     self.filePath = _filePath;
-
+    
     // reapply styles
     for (UIWindow *window in UIApplication.sharedApplication.windows) {
         [self styleSubviewsOfView:window];
@@ -239,10 +282,10 @@ NSArray *ClassGetSubclasses(Class parentClass) {
 - (NSArray *)invocationsForClass:(Class)aClass styleProperty:(CASStyleProperty *)styleProperty keyPath:(NSString *)keypath {
     CASObjectClassDescriptor *objectClassDescriptor = [self objectClassDescriptorForClass:aClass];
     CASPropertyDescriptor *propertyDescriptor = [objectClassDescriptor propertyDescriptorForKey:styleProperty.name];
-
+    
     //Special case textAttributes
     BOOL isTextAttributesProperty = styleProperty.childStyleProperties.count && [[styleProperty.name lowercaseString] hasSuffix:@"textattributes"];
-
+    
     NSInvocation *invocation;
     CASInvocation *invocationWrapper;;
     NSMutableArray *invocations = NSMutableArray.new;
@@ -251,190 +294,187 @@ NSArray *ClassGetSubclasses(Class parentClass) {
         invocationWrapper = [[CASInvocation alloc] initWithInvocation:invocation forKeyPath:keypath];
         [invocations addObject:invocationWrapper];
     }
-
+    
     [propertyDescriptor.argumentDescriptors enumerateObjectsUsingBlock:^(CASArgumentDescriptor *argDescriptor, NSUInteger idx, BOOL *stop) {
         NSInteger argIndex = 2 + idx;
-
-        if (idx > 0) {
-            //arguments after first only supports enums at moment
-            NSString *valueName = [styleProperty.arguments[argDescriptor.name] cas_stringByCamelCasing];
-            if (valueName.length) {
-                NSInteger value = [argDescriptor.valuesByName[valueName] integerValue];
-                [invocation setArgument:&value atIndex:argIndex];
-            }
-            return;
+        NSString *valueName = [styleProperty.arguments[argDescriptor.name] cas_stringByCamelCasing];
+        if (valueName.length) {
+            NSInteger value = [argDescriptor.valuesByName[valueName] integerValue];
+            [invocation setArgument:&value atIndex:argIndex];
         }
-
-        switch (argDescriptor.primitiveType) {
-            case CASPrimitiveTypeBOOL: {
-                id value = [styleProperty valueOfTokenType:CASTokenTypeBoolean] ?: [styleProperty valueOfTokenType:CASTokenTypeUnit];
-                BOOL boolValue = [value boolValue];
-                [invocation setArgument:&boolValue atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeInteger: {
-                NSInteger value;
-                if (argDescriptor.valuesByName) {
-                    NSString *valueName = [[styleProperty valueOfTokenType:CASTokenTypeRef] cas_stringByCamelCasing];
-                    value = [argDescriptor.valuesByName[valueName] integerValue];
-                } else {
-                    value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] integerValue];
+        
+        else {
+            switch (argDescriptor.primitiveType) {
+                case CASPrimitiveTypeBOOL: {
+                    id value = [styleProperty valueOfTokenType:CASTokenTypeBoolean] ?: [styleProperty valueOfTokenType:CASTokenTypeUnit];
+                    BOOL boolValue = [value boolValue];
+                    [invocation setArgument:&boolValue atIndex:argIndex];
+                    break;
                 }
-                [invocation setArgument:&value atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeDouble: {
-                CGFloat value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] doubleValue];
-                [invocation setArgument:&value atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeFloat: {
-                float value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] floatValue];
-                [invocation setArgument:&value atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeCGSize: {
-                CGSize size;
-                [styleProperty transformValuesToCGSize:&size];
-                [invocation setArgument:&size atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeCGRect: {
-                CGRect rect;
-                [styleProperty transformValuesToCGRect:&rect];
-                [invocation setArgument:&rect atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeCGPoint: {
-                CGPoint point;
-                [styleProperty transformValuesToCGPoint:&point];
-                [invocation setArgument:&point atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeUIEdgeInsets: {
-                UIEdgeInsets insets;
-                [styleProperty transformValuesToUIEdgeInsets:&insets];
-                [invocation setArgument:&insets atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeUIOffset : {
-                UIOffset offset;
-                [styleProperty transformValuesToUIOffset:&offset];
-                [invocation setArgument:&offset atIndex:argIndex];
-                break;
-            }
-            case CASPrimitiveTypeCGColorRef : {
-                UIColor *color = nil;
-                [styleProperty transformValuesToUIColor:&color];
-                if (color) {
-                    [self.invocationObjectArguments addObject:color];
+                case CASPrimitiveTypeInteger: {
+                    NSInteger value;
+                    if (argDescriptor.valuesByName) {
+                        NSString *valueName = [[styleProperty valueOfTokenType:CASTokenTypeRef] cas_stringByCamelCasing];
+                        value = [argDescriptor.valuesByName[valueName] integerValue];
+                    } else {
+                        value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] integerValue];
+                    }
+                    [invocation setArgument:&value atIndex:argIndex];
+                    break;
                 }
-                CGColorRef colorRef = color.CGColor;
-                [invocation setArgument:&colorRef atIndex:argIndex];
+                case CASPrimitiveTypeDouble: {
+                    CGFloat value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] doubleValue];
+                    [invocation setArgument:&value atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeFloat: {
+                    float value = [[styleProperty valueOfTokenType:CASTokenTypeUnit] floatValue];
+                    [invocation setArgument:&value atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeCGSize: {
+                    CGSize size;
+                    [styleProperty transformValuesToCGSize:&size];
+                    [invocation setArgument:&size atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeCGRect: {
+                    CGRect rect;
+                    [styleProperty transformValuesToCGRect:&rect];
+                    [invocation setArgument:&rect atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeCGPoint: {
+                    CGPoint point;
+                    [styleProperty transformValuesToCGPoint:&point];
+                    [invocation setArgument:&point atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeUIEdgeInsets: {
+                    UIEdgeInsets insets;
+                    [styleProperty transformValuesToUIEdgeInsets:&insets];
+                    [invocation setArgument:&insets atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeUIOffset : {
+                    UIOffset offset;
+                    [styleProperty transformValuesToUIOffset:&offset];
+                    [invocation setArgument:&offset atIndex:argIndex];
+                    break;
+                }
+                case CASPrimitiveTypeCGColorRef : {
+                    UIColor *color = nil;
+                    [styleProperty transformValuesToUIColor:&color];
+                    if (color) {
+                        [self.invocationObjectArguments addObject:color];
+                    }
+                    CGColorRef colorRef = color.CGColor;
+                    [invocation setArgument:&colorRef atIndex:argIndex];
+                }
+                default:
+                    break;
             }
-            default:
-                break;
-        }
-
-        id objectArg = nil;
-        if (argDescriptor.argumentClass == UIImage.class) {
-            [styleProperty transformValuesToUIImage:&objectArg];
-        } else if (argDescriptor.argumentClass == UIColor.class) {
-            [styleProperty transformValuesToUIColor:&objectArg];
-        } else if (argDescriptor.argumentClass == NSString.class) {
-            [styleProperty transformValuesToNSString:&objectArg];
-        } else if (argDescriptor.argumentClass == UIFont.class) {
-            [styleProperty transformValuesToUIFont:&objectArg];
-        }
-
-        if (styleProperty.childStyleProperties.count) {
-            id target = nil;
-            Class targetClass = argDescriptor.argumentClass;
-
-            NSString *childKeyPath = keypath.length ? [NSString stringWithFormat:@"%@.%@", keypath, styleProperty.name] : styleProperty.name;
-
-            // handle textAttributes as special case
-            BOOL isTextAttributesArg = targetClass == NSDictionary.class && isTextAttributesProperty;
-            if (isTextAttributesArg) {
-                target = CASTextAttributes.new;
-                targetClass = CASTextAttributes.class;
-                childKeyPath = nil;
+            
+            id objectArg = nil;
+            if (argDescriptor.argumentClass == UIImage.class) {
+                [styleProperty transformValuesToUIImage:&objectArg];
+            } else if (argDescriptor.argumentClass == UIColor.class) {
+                [styleProperty transformValuesToUIColor:&objectArg];
+            } else if (argDescriptor.argumentClass == NSString.class) {
+                [styleProperty transformValuesToNSString:&objectArg];
+            } else if (argDescriptor.argumentClass == UIFont.class) {
+                [styleProperty transformValuesToUIFont:&objectArg];
             }
-
-            for (CASStyleProperty *childStyleProperty in styleProperty.childStyleProperties) {
-                NSArray *childInvocations = [self invocationsForClass:targetClass styleProperty:childStyleProperty keyPath:childKeyPath];
+            
+            if (styleProperty.childStyleProperties.count) {
+                id target = nil;
+                Class targetClass = argDescriptor.argumentClass;
                 
-                if (target) {
-                    [childInvocations makeObjectsPerformSelector:@selector(invokeWithTarget:) withObject:target];
-                } else {
-                    [invocations addObjectsFromArray:childInvocations];
+                NSString *childKeyPath = keypath.length ? [NSString stringWithFormat:@"%@.%@", keypath, styleProperty.name] : styleProperty.name;
+                
+                // handle textAttributes as special case
+                BOOL isTextAttributesArg = targetClass == NSDictionary.class && isTextAttributesProperty;
+                if (isTextAttributesArg) {
+                    target = CASTextAttributes.new;
+                    targetClass = CASTextAttributes.class;
+                    childKeyPath = nil;
+                }
+                
+                for (CASStyleProperty *childStyleProperty in styleProperty.childStyleProperties) {
+                    NSArray *childInvocations = [self invocationsForClass:targetClass styleProperty:childStyleProperty keyPath:childKeyPath];
+                    
+                    if (target) {
+                        [childInvocations makeObjectsPerformSelector:@selector(invokeWithTarget:) withObject:target];
+                    } else {
+                        [invocations addObjectsFromArray:childInvocations];
+                    }
+                }
+                
+                // if textAttributes set argument to dictionary value
+                if (isTextAttributesArg) {
+                    objectArg = [target dictionary];
+                    [invocation setArgument:&objectArg atIndex:argIndex];
                 }
             }
-
-            // if textAttributes set argument to dictionary value
-            if (isTextAttributesArg) {
-                objectArg = [target dictionary];
+            
+            if (objectArg != nil) {
                 [invocation setArgument:&objectArg atIndex:argIndex];
+                [self.invocationObjectArguments addObject:objectArg];
             }
-        }
-
-        if (objectArg != nil) {
-            [invocation setArgument:&objectArg atIndex:argIndex];
-            [self.invocationObjectArguments addObject:objectArg];
         }
     }];
     return invocations;
 }
 
 - (void)setupObjectClassDescriptors {
-
+    
     // Common ENUM maps
     NSDictionary *controlStateMap = @{
-        @"normal"               : @(UIControlStateNormal),
-        @"highlighted"          : @(UIControlStateHighlighted),
-        @"disabled"             : @(UIControlStateDisabled),
-        @"selected"             : @(UIControlStateSelected),
-        @"selectedHighlighted"  : @(UIControlStateSelected|UIControlStateHighlighted)
-    };
-
+                                      @"normal"               : @(UIControlStateNormal),
+                                      @"highlighted"          : @(UIControlStateHighlighted),
+                                      @"disabled"             : @(UIControlStateDisabled),
+                                      @"selected"             : @(UIControlStateSelected),
+                                      @"selectedHighlighted"  : @(UIControlStateSelected|UIControlStateHighlighted)
+                                      };
+    
     NSDictionary *textAlignmentMap = @{
-        @"center"    : @(NSTextAlignmentCenter),
-        @"left"      : @(NSTextAlignmentLeft),
-        @"right"     : @(NSTextAlignmentRight),
-        @"justified" : @(NSTextAlignmentJustified),
-        @"natural"   : @(NSTextAlignmentNatural),
-    };
-
+                                       @"center"    : @(NSTextAlignmentCenter),
+                                       @"left"      : @(NSTextAlignmentLeft),
+                                       @"right"     : @(NSTextAlignmentRight),
+                                       @"justified" : @(NSTextAlignmentJustified),
+                                       @"natural"   : @(NSTextAlignmentNatural),
+                                       };
+    
     NSDictionary *lineBreakModeMap = @{
-        @"wordWrapping"     : @(NSLineBreakByWordWrapping),
-        @"charWrapping"     : @(NSLineBreakByCharWrapping),
-        @"clipping"         : @(NSLineBreakByClipping),
-        @"truncatingHead"   : @(NSLineBreakByTruncatingHead),
-        @"truncatingTail"   : @(NSLineBreakByTruncatingTail),
-        @"truncatingMiddle" : @(NSLineBreakByTruncatingMiddle)
-    };
-
+                                       @"wordWrapping"     : @(NSLineBreakByWordWrapping),
+                                       @"charWrapping"     : @(NSLineBreakByCharWrapping),
+                                       @"clipping"         : @(NSLineBreakByClipping),
+                                       @"truncatingHead"   : @(NSLineBreakByTruncatingHead),
+                                       @"truncatingTail"   : @(NSLineBreakByTruncatingTail),
+                                       @"truncatingMiddle" : @(NSLineBreakByTruncatingMiddle)
+                                       };
+    
     NSDictionary *barMetricsMap = @{
-        @"default"                : @(UIBarMetricsDefault),
-        @"landscapePhone"        : @(UIBarMetricsLandscapePhone),
-        @"defaultPrompt"         : @(UIBarMetricsDefaultPrompt),
-        @"landscapePhonePrompt" : @(UIBarMetricsLandscapePhonePrompt),
-    };
-
+                                    @"default"                : @(UIBarMetricsDefault),
+                                    @"landscapePhone"        : @(UIBarMetricsLandscapePhone),
+                                    @"defaultPrompt"         : @(UIBarMetricsDefaultPrompt),
+                                    @"landscapePhonePrompt" : @(UIBarMetricsLandscapePhonePrompt),
+                                    };
+    
     NSDictionary *searchBarIconMap = @{
-        @"search"       : @(UISearchBarIconSearch),
-        @"clear"        : @(UISearchBarIconClear),
-        @"bookmark"     : @(UISearchBarIconBookmark),
-        @"resultsList"  : @(UISearchBarIconResultsList),
-    };
-
+                                       @"search"       : @(UISearchBarIconSearch),
+                                       @"clear"        : @(UISearchBarIconClear),
+                                       @"bookmark"     : @(UISearchBarIconBookmark),
+                                       @"resultsList"  : @(UISearchBarIconResultsList),
+                                       };
+    
     NSDictionary *barPositionMap = @{
-        @"any"          : @(UIBarPositionAny),
-        @"bottom"       : @(UIBarPositionBottom),
-        @"top"          : @(UIBarPositionTop),
-        @"topAttached"  : @(UIBarPositionTopAttached),
-    };
-
+                                     @"any"          : @(UIBarPositionAny),
+                                     @"bottom"       : @(UIBarPositionBottom),
+                                     @"top"          : @(UIBarPositionTop),
+                                     @"topAttached"  : @(UIBarPositionTopAttached),
+                                     };
+    
     // Common CASArgumentDescriptors
     CASArgumentDescriptor *colorArg = [CASArgumentDescriptor argWithClass:UIColor.class];
     CASArgumentDescriptor *dictionaryArg = [CASArgumentDescriptor argWithClass:NSDictionary.class];
@@ -447,119 +487,119 @@ NSArray *ClassGetSubclasses(Class parentClass) {
     CASArgumentDescriptor *boolArg = [CASArgumentDescriptor argWithObjCType:@encode(BOOL)];
     CASArgumentDescriptor *offsetArg = [CASArgumentDescriptor argWithObjCType:@encode(UIOffset)];
     CASArgumentDescriptor *searchIconArg = [CASArgumentDescriptor argWithName:@"icon" valuesByName:searchBarIconMap];
-
+    
     CASArgumentDescriptor *barPositionArg = [CASArgumentDescriptor argWithName:@"barPosition" valuesByName:barPositionMap];
-
+    
     // UIView
     CASObjectClassDescriptor *objectClassDescriptor = [self objectClassDescriptorForClass:UIView.class];
-
+    
     NSDictionary *contentModeMap = @{
-        @"fill"        : @(UIViewContentModeScaleToFill),
-        @"aspectFit"   : @(UIViewContentModeScaleAspectFit),
-        @"aspectFill"  : @(UIViewContentModeScaleAspectFill),
-        @"redraw"      : @(UIViewContentModeRedraw),
-        @"center"      : @(UIViewContentModeCenter),
-        @"top"         : @(UIViewContentModeTop),
-        @"bottom"      : @(UIViewContentModeBottom),
-        @"left"        : @(UIViewContentModeLeft),
-        @"right"       : @(UIViewContentModeRight),
-        @"topLeft"     : @(UIViewContentModeTopLeft),
-        @"topRight"    : @(UIViewContentModeTopRight),
-        @"bottomLeft"  : @(UIViewContentModeBottomLeft),
-        @"bottomRight" : @(UIViewContentModeBottomRight),
-    };
+                                     @"fill"        : @(UIViewContentModeScaleToFill),
+                                     @"aspectFit"   : @(UIViewContentModeScaleAspectFit),
+                                     @"aspectFill"  : @(UIViewContentModeScaleAspectFill),
+                                     @"redraw"      : @(UIViewContentModeRedraw),
+                                     @"center"      : @(UIViewContentModeCenter),
+                                     @"top"         : @(UIViewContentModeTop),
+                                     @"bottom"      : @(UIViewContentModeBottom),
+                                     @"left"        : @(UIViewContentModeLeft),
+                                     @"right"       : @(UIViewContentModeRight),
+                                     @"topLeft"     : @(UIViewContentModeTopLeft),
+                                     @"topRight"    : @(UIViewContentModeTopRight),
+                                     @"bottomLeft"  : @(UIViewContentModeBottomLeft),
+                                     @"bottomRight" : @(UIViewContentModeBottomRight),
+                                     };
     [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:contentModeMap]] forPropertyKey:@cas_propertykey(UIView, contentMode)];
-
+    
     // some properties don't show up via reflection so we need to add them manually
     [objectClassDescriptor setArgumentDescriptors:@[boolArg] forPropertyKey:@cas_propertykey(UIView, clipsToBounds)];
     [objectClassDescriptor setArgumentDescriptors:@[colorArg] forPropertyKey:@cas_propertykey(UIView, backgroundColor)];
     [objectClassDescriptor setArgumentDescriptors:@[colorArg] forPropertyKey:@cas_propertykey(UIView, tintColor)];
-
+    
     // UIBarItem
     objectClassDescriptor = [self objectClassDescriptorForClass:UIBarItem.class];
     [objectClassDescriptor setArgumentDescriptors:@[dictionaryArg, stateArg] setter:@selector(setTitleTextAttributes:forState:) forPropertyKey:@"titleTextAttributes"];
-
+    
     // UILabel
     objectClassDescriptor = [self objectClassDescriptorForClass:UILabel.class];
     [objectClassDescriptor setArgumentDescriptors:@[lineBreakModeArg] forPropertyKey:@cas_propertykey(UILabel, lineBreakMode)];
     [objectClassDescriptor setArgumentDescriptors:@[textAlignmentArg] forPropertyKey:@cas_propertykey(UILabel, textAlignment)];
-
+    
     // UITextField
     // TODO border insets
     objectClassDescriptor = [self objectClassDescriptorForClass:UITextField.class];
     objectClassDescriptor.propertyKeyAliases = @{
-        @"backgroundImage"     : @cas_propertykey(UITextField, background),
-        @"textInsets"          : @cas_propertykey(UITextField, cas_textEdgeInsets),
-    };
-
+                                                 @"backgroundImage"     : @cas_propertykey(UITextField, background),
+                                                 @"textInsets"          : @cas_propertykey(UITextField, cas_textEdgeInsets),
+                                                 };
+    
     [objectClassDescriptor setArgumentDescriptors:@[textAlignmentArg] forPropertyKey:@cas_propertykey(UITextField, textAlignment)];
-
+    
     NSDictionary *borderStyleMap = @{
-        @"none"    : @(UITextBorderStyleNone),
-        @"line"    : @(UITextBorderStyleLine),
-        @"bezel"   : @(UITextBorderStyleBezel),
-        @"rounded" : @(UITextBorderStyleRoundedRect),
-    };
+                                     @"none"    : @(UITextBorderStyleNone),
+                                     @"line"    : @(UITextBorderStyleLine),
+                                     @"bezel"   : @(UITextBorderStyleBezel),
+                                     @"rounded" : @(UITextBorderStyleRoundedRect),
+                                     };
     [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:borderStyleMap]] forPropertyKey:@cas_propertykey(UITextField, borderStyle)];
-
+    
     NSDictionary *textFieldViewModeMap = @{
-        @"never"           : @(UITextFieldViewModeNever),
-        @"whileEditing"    : @(UITextFieldViewModeWhileEditing),
-        @"unlessEditing"   : @(UITextFieldViewModeUnlessEditing),
-        @"always"          : @(UITextFieldViewModeAlways),
-    };
+                                           @"never"           : @(UITextFieldViewModeNever),
+                                           @"whileEditing"    : @(UITextFieldViewModeWhileEditing),
+                                           @"unlessEditing"   : @(UITextFieldViewModeUnlessEditing),
+                                           @"always"          : @(UITextFieldViewModeAlways),
+                                           };
     [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:textFieldViewModeMap]] forPropertyKey:@cas_propertykey(UITextField, leftViewMode)];
     [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:textFieldViewModeMap]] forPropertyKey:@cas_propertykey(UITextField, rightViewMode)];
     [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:textFieldViewModeMap]] forPropertyKey:@cas_propertykey(UITextField, clearButtonMode)];
     
     // UIControl
     objectClassDescriptor = [self objectClassDescriptorForClass:UIControl.class];
-
+    
     NSDictionary *contentVerticalAlignmentMap = @{
-        @"center" : @(UIControlContentVerticalAlignmentCenter),
-        @"top"    : @(UIControlContentVerticalAlignmentTop),
-        @"bottom" : @(UIControlContentVerticalAlignmentBottom),
-        @"fill"   : @(UIControlContentVerticalAlignmentFill),
-    };
+                                                  @"center" : @(UIControlContentVerticalAlignmentCenter),
+                                                  @"top"    : @(UIControlContentVerticalAlignmentTop),
+                                                  @"bottom" : @(UIControlContentVerticalAlignmentBottom),
+                                                  @"fill"   : @(UIControlContentVerticalAlignmentFill),
+                                                  };
     [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:contentVerticalAlignmentMap]] forPropertyKey:@cas_propertykey(UIControl, contentVerticalAlignment)];
-
+    
     NSDictionary *contentHorizontalAlignmentMap = @{
-        @"center" : @(UIControlContentHorizontalAlignmentCenter),
-        @"left"   : @(UIControlContentHorizontalAlignmentLeft),
-        @"right"  : @(UIControlContentHorizontalAlignmentRight),
-        @"fill"   : @(UIControlContentHorizontalAlignmentFill),
-    };
+                                                    @"center" : @(UIControlContentHorizontalAlignmentCenter),
+                                                    @"left"   : @(UIControlContentHorizontalAlignmentLeft),
+                                                    @"right"  : @(UIControlContentHorizontalAlignmentRight),
+                                                    @"fill"   : @(UIControlContentHorizontalAlignmentFill),
+                                                    };
     [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:contentHorizontalAlignmentMap]] forPropertyKey:@cas_propertykey(UIControl, contentHorizontalAlignment)];
-
+    
     // UIButton
     objectClassDescriptor = [self objectClassDescriptorForClass:UIButton.class];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[colorArg, stateArg] setter:@selector(setTitleColor:forState:) forPropertyKey:@"titleColor"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[colorArg, stateArg] setter:@selector(setTitleShadowColor:forState:) forPropertyKey:@"titleShadowColor"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg] setter:@selector(setBackgroundImage:forState:) forPropertyKey:@"backgroundImage"];
     
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg] setter:@selector(setImage:forState:) forPropertyKey:@"image"];
     
     
-
+    
     // UIBarButtonItem
     objectClassDescriptor = [self objectClassDescriptorForClass:UIBarButtonItem.class];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg, barMetricsArg] setter:@selector(setBackgroundImage:forState:barMetrics:) forPropertyKey:@"backgroundImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[floatArg, barMetricsArg] setter:@selector(setBackgroundVerticalPositionAdjustment:forBarMetrics:) forPropertyKey:@"backgroundVerticalPositionAdjustment"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[offsetArg, barMetricsArg] setter:@selector(setTitlePositionAdjustment:forBarMetrics:) forPropertyKey:@"titlePositionAdjustment"];
-
+    
     //backButton
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg, barMetricsArg] setter:@selector(setBackButtonBackgroundImage:forState:barMetrics:) forPropertyKey:@"backButtonBackgroundImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[floatArg, barMetricsArg] setter:@selector(setBackButtonBackgroundVerticalPositionAdjustment:forBarMetrics:) forPropertyKey:@"backButtonBackgroundVerticalPositionAdjustment"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[offsetArg, barMetricsArg] setter:@selector(setBackButtonTitlePositionAdjustment:forBarMetrics:) forPropertyKey:@"backButtonTitlePositionAdjustment"];
-
+    
     // UINavigationBar
     objectClassDescriptor = [self objectClassDescriptorForClass:UINavigationBar.class];
     if (CASKeyDeviceSystemMajorVersion() >= 7) {
@@ -567,126 +607,126 @@ NSArray *ClassGetSubclasses(Class parentClass) {
     } else {
         [objectClassDescriptor setArgumentDescriptors:@[imageArg, barMetricsArg] setter:@selector(setBackgroundImage:forBarMetrics:) forPropertyKey:@"backgroundImage"];
     }
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[boolArg] forPropertyKey:@cas_propertykey(UINavigationBar, translucent)];
     [objectClassDescriptor setArgumentDescriptors:@[floatArg, barMetricsArg] setter:@selector(setTitleVerticalPositionAdjustment:forBarMetrics:) forPropertyKey:@"titleVerticalPositionAdjustment"];
-
+    
     // UISearchBar
     objectClassDescriptor = [self objectClassDescriptorForClass:UISearchBar.class];
     if (CASKeyDeviceSystemMajorVersion() >= 7) {
         [objectClassDescriptor setArgumentDescriptors:@[imageArg, barPositionArg, barMetricsArg] setter:@selector(setBackgroundImage:forBarPosition:barMetrics:) forPropertyKey:@"backgroundImage"];
     }
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg] setter:@selector(setSearchFieldBackgroundImage:forState:) forPropertyKey:@"searchFieldBackgroundImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, searchIconArg, stateArg] setter:@selector(setImage:forSearchBarIcon:state:) forPropertyKey:@"iconImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg] setter:@selector(setScopeBarButtonBackgroundImage:forState:) forPropertyKey:@"scopeBarButtonBackgroundImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, [CASArgumentDescriptor argWithName:@"leftSegmentState" valuesByName:controlStateMap], [CASArgumentDescriptor argWithName:@"rightSegmentState" valuesByName:controlStateMap]] setter:@selector(setScopeBarButtonDividerImage:forLeftSegmentState:rightSegmentState:) forPropertyKey:@"scopeBarButtonDividerImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[offsetArg, searchIconArg] setter:@selector(setPositionAdjustment:forSearchBarIcon:) forPropertyKey:@"iconPositionAdjustment"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[dictionaryArg, stateArg] setter:@selector(setScopeBarButtonTitleTextAttributes:forState:) forPropertyKey:@"scopeBarButtonTitleTextAttributes"];
-
+    
     // UISegmentedControl
     objectClassDescriptor = [self objectClassDescriptorForClass:UISegmentedControl.class];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg, barMetricsArg] setter:@selector(setBackgroundImage:forState:barMetrics:) forPropertyKey:@"backgroundImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, [CASArgumentDescriptor argWithName:@"leftSegmentState" valuesByName:controlStateMap], [CASArgumentDescriptor argWithName:@"rightSegmentState" valuesByName:controlStateMap], barMetricsArg] setter:@selector(setDividerImage:forLeftSegmentState:rightSegmentState:barMetrics:) forPropertyKey:@"dividerImage"];
-
+    
     NSDictionary *segmentedControlSegmentMap = @{
-        @"any"    : @(UISegmentedControlSegmentAny),
-        @"left"   : @(UISegmentedControlSegmentLeft),
-        @"center" : @(UISegmentedControlSegmentCenter),
-        @"right"  : @(UISegmentedControlSegmentRight),
-        @"alone"  : @(UISegmentedControlSegmentAlone),
-    };
+                                                 @"any"    : @(UISegmentedControlSegmentAny),
+                                                 @"left"   : @(UISegmentedControlSegmentLeft),
+                                                 @"center" : @(UISegmentedControlSegmentCenter),
+                                                 @"right"  : @(UISegmentedControlSegmentRight),
+                                                 @"alone"  : @(UISegmentedControlSegmentAlone),
+                                                 };
     [objectClassDescriptor setArgumentDescriptors:@[offsetArg, [CASArgumentDescriptor argWithName:@"segmentType" valuesByName:segmentedControlSegmentMap], barMetricsArg] setter:@selector(setContentPositionAdjustment:forSegmentType:barMetrics:) forPropertyKey:@"contentPositionAdjustment"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[dictionaryArg, stateArg] setter:@selector(setTitleTextAttributes:forState:) forPropertyKey:@"titleTextAttributes"];
     
     // UIStepper
     objectClassDescriptor = [self objectClassDescriptorForClass:UIStepper.class];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg] setter:@selector(setBackgroundImage:forState:) forPropertyKey:@"backgroundImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, [CASArgumentDescriptor argWithName:@"leftSegmentState" valuesByName:controlStateMap], [CASArgumentDescriptor argWithName:@"rightSegmentState" valuesByName:controlStateMap]] setter:@selector(setDividerImage:forLeftSegmentState:rightSegmentState:) forPropertyKey:@"dividerImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg] setter:@selector(setDecrementImage:forState:) forPropertyKey:@"decrementImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg] setter:@selector(setIncrementImage:forState:) forPropertyKey:@"incrementImage"];
-
+    
     // UITabBar
     objectClassDescriptor = [self objectClassDescriptorForClass:UITabBar.class];
     if (CASKeyDeviceSystemMajorVersion() >= 7) {
         NSDictionary *tabBarItemPositioningMap = @{
-            @"auto"      : @(UITabBarItemPositioningAutomatic),
-            @"automatic" : @(UITabBarItemPositioningAutomatic),
-            @"fill"      : @(UITabBarItemPositioningFill),
-            @"centered"  : @(UITabBarItemPositioningCentered),
-        };
+                                                   @"auto"      : @(UITabBarItemPositioningAutomatic),
+                                                   @"automatic" : @(UITabBarItemPositioningAutomatic),
+                                                   @"fill"      : @(UITabBarItemPositioningFill),
+                                                   @"centered"  : @(UITabBarItemPositioningCentered),
+                                                   };
         [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:tabBarItemPositioningMap]] forPropertyKey:@cas_propertykey(UITabBar, itemPositioning)];
-
+        
         NSDictionary *barStyleMap = @{
-            @"default" : @(UIBarStyleDefault),
-            @"black"   : @(UIBarStyleBlack),
-        };
+                                      @"default" : @(UIBarStyleDefault),
+                                      @"black"   : @(UIBarStyleBlack),
+                                      };
         [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithValuesByName:barStyleMap]] forPropertyKey:@cas_propertykey(UITabBar, barStyle)];
         
         [objectClassDescriptor setArgumentDescriptors:@[boolArg] forPropertyKey:@cas_propertykey(UITabBar, translucent)];
     }
-
+    
     // UITabBarItem
     objectClassDescriptor = [self objectClassDescriptorForClass:UITabBarItem.class];
     [objectClassDescriptor setArgumentDescriptors:@[[CASArgumentDescriptor argWithObjCType:@encode(UIOffset)]] forPropertyKey:@cas_propertykey(UITabBarItem, titlePositionAdjustment)];
-
+    
     // UIToolBar
     objectClassDescriptor = [self objectClassDescriptorForClass:UIToolbar.class];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, [CASArgumentDescriptor argWithName:@"toolbarPosition" valuesByName:barPositionMap], barMetricsArg] setter:@selector(setBackgroundImage:forToolbarPosition:barMetrics:) forPropertyKey:@"backgroundImage"];
-
+    
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, [CASArgumentDescriptor argWithName:@"toolbarPosition" valuesByName:barPositionMap]] setter:@selector(setShadowImage:forToolbarPosition:) forPropertyKey:@"shadowImage"];
-
+    
     // CASTextAttributes
     objectClassDescriptor = [self objectClassDescriptorForClass:CASTextAttributes.class];
-
+    
     NSDictionary *underlineStyleMap;
     if (CASKeyDeviceSystemMajorVersion() >= 7) {
         underlineStyleMap = @{
-            @"none"      : @(NSUnderlineStyleNone),
-            @"single"    : @(NSUnderlineStyleSingle),
-            @"thick"     : @(NSUnderlineStyleThick),
-            @"double"    : @(NSUnderlineStyleDouble),
-            @"solid"     : @(NSUnderlinePatternSolid),
-            @"dot"       : @(NSUnderlinePatternDot),
-            @"dash"      : @(NSUnderlinePatternDash),
-            @"dashDot"   : @(NSUnderlinePatternDashDot),
-            @"dotDotDot" : @(NSUnderlinePatternDashDotDot),
-            @"byWord"    : @(NSUnderlineByWord),
-        };
+                              @"none"      : @(NSUnderlineStyleNone),
+                              @"single"    : @(NSUnderlineStyleSingle),
+                              @"thick"     : @(NSUnderlineStyleThick),
+                              @"double"    : @(NSUnderlineStyleDouble),
+                              @"solid"     : @(NSUnderlinePatternSolid),
+                              @"dot"       : @(NSUnderlinePatternDot),
+                              @"dash"      : @(NSUnderlinePatternDash),
+                              @"dashDot"   : @(NSUnderlinePatternDashDot),
+                              @"dotDotDot" : @(NSUnderlinePatternDashDotDot),
+                              @"byWord"    : @(NSUnderlineByWord),
+                              };
     } else {
         underlineStyleMap = @{
-            @"none"    : @(NSUnderlineStyleNone),
-            @"single"  : @(NSUnderlineStyleSingle),
-        };
+                              @"none"    : @(NSUnderlineStyleNone),
+                              @"single"  : @(NSUnderlineStyleSingle),
+                              };
     }
-
+    
     CASArgumentDescriptor *underlineStyleArg = [CASArgumentDescriptor argWithValuesByName:underlineStyleMap];
     [objectClassDescriptor setArgumentDescriptors:@[underlineStyleArg] forPropertyKey:@cas_propertykey(CASTextAttributes, underlineStyle)];
     [objectClassDescriptor setArgumentDescriptors:@[underlineStyleArg] forPropertyKey:@cas_propertykey(CASTextAttributes, strikethroughStyle)];
-
+    
     // NSParagraphStyle
     objectClassDescriptor = [self objectClassDescriptorForClass:NSParagraphStyle.class];
     [objectClassDescriptor setArgumentDescriptors:@[textAlignmentArg] forPropertyKey:@cas_propertykey(NSParagraphStyle, alignment)];
     [objectClassDescriptor setArgumentDescriptors:@[lineBreakModeArg] forPropertyKey:@cas_propertykey(NSParagraphStyle, lineBreakMode)];
-
-
+    
+    
     // NSShadow
     objectClassDescriptor = [self objectClassDescriptorForClass:NSShadow.class];
     [objectClassDescriptor setArgumentDescriptors:@[colorArg] forPropertyKey:@cas_propertykey(NSShadow, shadowColor)];
-
+    
     // UISlider
     objectClassDescriptor = [self objectClassDescriptorForClass:UISlider.class];
     [objectClassDescriptor setArgumentDescriptors:@[imageArg, stateArg] setter:@selector(setMinimumTrackImage:forState:) forPropertyKey:@"minimumTrackImage"];
@@ -713,7 +753,7 @@ NSArray *ClassGetSubclasses(Class parentClass) {
         if (!item) continue;
         [item cas_updateStylingIfNeeded];
     }
-
+    
     if (self.scheduledItems.allObjects.count == 0) {
         [self.updateTimer invalidate];
         self.updateTimer = nil;
@@ -722,7 +762,7 @@ NSArray *ClassGetSubclasses(Class parentClass) {
 
 - (void)scheduleUpdateForItem:(id<CASStyleableItem>)item {
     [self.scheduledItems addObject:item];
-
+    
     if (self.scheduledItems.allObjects.count && !self.updateTimer.isValid) {
         self.updateTimer = [NSTimer timerWithTimeInterval:0.0 target:self selector:@selector(updateScheduledItems) userInfo:nil repeats:YES];
         [NSRunLoop.mainRunLoop addTimer:self.updateTimer forMode:NSRunLoopCommonModes];
@@ -731,7 +771,7 @@ NSArray *ClassGetSubclasses(Class parentClass) {
 
 - (void)unscheduleUpdateForItem:(id<CASStyleableItem>)item {
     [self.scheduledItems removeObject:item];
-
+    
     if (self.scheduledItems.allObjects.count == 0) {
         [self.updateTimer invalidate];
         self.updateTimer = nil;
@@ -751,7 +791,7 @@ NSArray *ClassGetSubclasses(Class parentClass) {
             // reload styles
             _filePath = nil;
             self.filePath = _watchFilePath;
-
+            
             // reapply styles
             for (UIWindow *window in UIApplication.sharedApplication.windows) {
                 [self styleSubviewsOfView:window];
@@ -771,9 +811,9 @@ NSArray *ClassGetSubclasses(Class parentClass) {
 + (dispatch_source_t)watchForChangesToFilePath:(NSString *)filePath withCallback:(dispatch_block_t)callback {
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
     int fileDescriptor = open([filePath UTF8String], O_EVTONLY);
-
+    
     NSAssert(fileDescriptor > 0, @"Error could subscribe to events for file at path: %@", filePath);
-
+    
     __block dispatch_source_t source = dispatch_source_create(DISPATCH_SOURCE_TYPE_VNODE, fileDescriptor,
                                                               DISPATCH_VNODE_DELETE | DISPATCH_VNODE_WRITE | DISPATCH_VNODE_EXTEND,
                                                               queue);

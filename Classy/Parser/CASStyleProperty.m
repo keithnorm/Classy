@@ -29,10 +29,10 @@
 - (id)initWithNameToken:(CASToken *)nameToken valueTokens:(NSArray *)valueTokens {
     self = [super init];
     if (!self) return nil;
-
+    
     self.nameToken = nameToken;
     self.valueTokens = valueTokens;
-
+    
     return self;
 }
 
@@ -160,19 +160,40 @@
 
 - (BOOL)transformValuesToUIColor:(UIColor **)color {
     UIColor *colorValue = [self valueOfTokenType:CASTokenTypeColor];
+    
+    NSString *value = [self valueOfTokenType:CASTokenTypeRef]
+    ?: [self valueOfTokenType:CASTokenTypeSelector]
+    ?: [self valueOfTokenType:CASTokenTypeString];
+    
+    
+    NSString *colorFunctionSelector = [NSString stringWithFormat:@"%@:", value];
+    if ([UIColor instancesRespondToSelector:NSSelectorFromString(colorFunctionSelector)]) {
+        NSMutableArray *mutableValueTokens = self.valueTokens.mutableCopy;
+        [mutableValueTokens removeObjectAtIndex:0];
+        self.valueTokens = [NSArray arrayWithArray:mutableValueTokens];
+        UIColor *colorValue = [self valueOfTokenType:CASTokenTypeColor];
+        [self transformValuesToUIColor:&colorValue];
+        NSArray *unitTokens = [self consecutiveValuesOfTokenType:CASTokenTypeUnit];
+        NSExpression *colorExpression = [NSExpression expressionForConstantValue:colorValue];
+        NSExpression *expression = [NSExpression expressionForFunction:colorExpression selectorName:colorFunctionSelector arguments:@[[NSExpression expressionForConstantValue:unitTokens[0]]]];
+        *color = [expression expressionValueWithObject:nil context:nil];
+        CASToken *newColorToken = [CASToken tokenOfType:CASTokenTypeColor value:*color];
+        // TODO: assumes color arg is first arg in style property
+        // and assumes color arg is of the format function(color, arg)
+        [mutableValueTokens removeObjectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 5)]];
+        [mutableValueTokens insertObject:newColorToken atIndex:0];
+        self.valueTokens = [NSArray arrayWithArray:mutableValueTokens];
+        return YES;
+    }
+    
     if (colorValue) {
         *color = colorValue;
         return YES;
     }
-
-    NSString *value = [self valueOfTokenType:CASTokenTypeRef]
-        ?: [self valueOfTokenType:CASTokenTypeSelector]
-        ?: [self valueOfTokenType:CASTokenTypeString];
-
-    if ([value isEqualToString:@"rgb"] || [value isEqualToString:@"rgba"] || [value isEqualToString:@"hsl"] || [value isEqualToString:@"hsla"]) {
+    else if ([value isEqualToString:@"rgb"] || [value isEqualToString:@"rgba"] || [value isEqualToString:@"hsl"] || [value isEqualToString:@"hsla"]) {
         NSArray *unitTokens = [self consecutiveValuesOfTokenType:CASTokenTypeUnit];
         CGFloat alpha = 1.0;
-
+        
         // invalid if you don't have 3 colors
         if(unitTokens.count < 3) {
             return NO;
@@ -186,7 +207,7 @@
         }
         return YES;
     }
-
+    
     value = [value cas_stringByCamelCasing];
     SEL selector = NSSelectorFromString([NSString stringWithFormat:@"%@Color", value]);
     if (selector && [UIColor.class respondsToSelector:selector]) {
@@ -196,26 +217,26 @@
 #pragma clang diagnostic pop
         return YES;
     }
-
+    
     return NO;
 }
 
 - (BOOL)transformValuesToNSString:(NSString **)string {
     NSString *value = [self valueOfTokenType:CASTokenTypeString]
-        ?: [self valueOfTokenType:CASTokenTypeRef]
-        ?: [self valueOfTokenType:CASTokenTypeSelector];
+    ?: [self valueOfTokenType:CASTokenTypeRef]
+    ?: [self valueOfTokenType:CASTokenTypeSelector];
     if (value) {
         *string = value;
         return YES;
     }
-
+    
     return NO;
 }
 
 - (BOOL)transformValuesToUIImage:(UIImage **)image {
     UIEdgeInsets insets;
     BOOL hasInsets = [self transformValuesToUIEdgeInsets:&insets];
-
+    
     NSString *imageName = [self valueOfTokenType:CASTokenTypeString] ?: [self valueOfTokenType:CASTokenTypeRef];
     
     UIImage *imageValue = nil;
@@ -266,27 +287,27 @@
 - (BOOL)transformValuesToUIFont:(UIFont **)font {
     NSNumber *fontSize = [self valueOfTokenType:CASTokenTypeUnit];
     NSString *fontName = [self valueOfTokenType:CASTokenTypeString]
-        ?: [self valueOfTokenType:CASTokenTypeRef]
-        ?: [self valueOfTokenType:CASTokenTypeSelector];
-
+    ?: [self valueOfTokenType:CASTokenTypeRef]
+    ?: [self valueOfTokenType:CASTokenTypeSelector];
+    
     if (!fontSize && !fontName.length) {
         return NO;
     }
-
+    
     static NSDictionary *textStyleLookupMap = nil;
     if (!textStyleLookupMap) {
         // Classy is available also on iOS6, so instead of using UIKit consts for text styles that are available
         // only on iOS7+ let the strings be hardcoded. This avoids the need for weak-linking UIKit.
         textStyleLookupMap = @{
-                @"body" : @"UICTFontTextStyleBody",
-                @"caption1" : @"UICTFontTextStyleCaption1",
-                @"caption2" : @"UICTFontTextStyleCaption2",
-                @"footnote" : @"UICTFontTextStyleFootnote",
-                @"headline" : @"UICTFontTextStyleHeadline",
-                @"subheadline" : @"UICTFontTextStyleSubhead",
-        };
+                               @"body" : @"UICTFontTextStyleBody",
+                               @"caption1" : @"UICTFontTextStyleCaption1",
+                               @"caption2" : @"UICTFontTextStyleCaption2",
+                               @"footnote" : @"UICTFontTextStyleFootnote",
+                               @"headline" : @"UICTFontTextStyleHeadline",
+                               @"subheadline" : @"UICTFontTextStyleSubhead",
+                               };
     }
-
+    
     NSString *textStyle = textStyleLookupMap[fontName];
     if (textStyle && !fontSize) {
 #pragma clang diagnostic push
@@ -316,9 +337,9 @@
             break;
         }
     }
-
+    
     if (!hasOperator) return;
-
+    
     CASExpressionSolver *solver = CASExpressionSolver.new;
     self.valueTokens = [solver tokensByReducingTokens:self.valueTokens];
     self.values = nil;

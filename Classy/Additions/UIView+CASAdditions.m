@@ -80,10 +80,10 @@ static void *CASStyleHasBeenUpdatedKey = &CASStyleHasBeenUpdatedKey;
 
 - (void)cas_updateStyling {
     if (self.window) {
-        [CASStyler.defaultStyler styleItem:self];
+        [CASStyler styleItem:self];
     }
     objc_setAssociatedObject(self, CASStyleHasBeenUpdatedKey, @(YES), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    [CASStyler.defaultStyler unscheduleUpdateForItem:self];
+    [CASStyler unscheduleUpdateForItem:self];
 }
 
 - (BOOL)cas_needsUpdateStyling {
@@ -92,7 +92,7 @@ static void *CASStyleHasBeenUpdatedKey = &CASStyleHasBeenUpdatedKey;
 
 - (void)cas_setNeedsUpdateStyling {
     objc_setAssociatedObject(self, CASStyleHasBeenUpdatedKey, @(NO), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    [CASStyler.defaultStyler scheduleUpdateForItem:self];
+    [CASStyler scheduleUpdateForItem:self];
 }
 
 @end
