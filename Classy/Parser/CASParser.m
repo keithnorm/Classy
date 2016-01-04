@@ -643,7 +643,7 @@ NSInteger const CASParseErrorFileContents = 2;
                 styleSelector.styleClass = [tokenValue substringFromIndex:1];
             } else {
                 styleSelector.objectClass = NSClassFromString(tokenValue);
-				if (!styleSelector.objectClass) {
+                if (!styleSelector.objectClass) {
                      // Maybe it's a custom Swift class
                     styleSelector.objectClass = [self swiftClassFromString:tokenValue];
                 }
